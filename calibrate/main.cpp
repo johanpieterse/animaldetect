@@ -44,8 +44,6 @@ void area_threshold_callback(int, void*);
 
 std::map<std::string, int> options; // global?
 
-
-
 void readConfig()
 {
 
@@ -120,16 +118,11 @@ void writeConfig()
 		options["diff_threshold"] = diff_threshold;
 		options["area_threshold"] = area_threshold;
 
-		//std::map<std::string, int>::iterator it;
-		//it = options.begin();
 		for (std::map<std::string, int>::iterator it = options.begin(); it != options.end(); ++it)
 		{
 			cfgfile << it->first << " = " << it->second << "\n";
-			//std::cout << it->first << " => " << it->second << '\n';
 		}
-		//cfgfile << "filter_kernel" << " = " << filter_kernel << "\n";
-		//cfgfile << "diff_threshold" << " = " << diff_threshold << "\n";
-		//cfgfile << "area_threshold" << " = " << area_threshold << "\n";
+
 		cfgfile.close();
 	}
 }
@@ -170,9 +163,8 @@ void getDiff(const Mat backgroundImage, const Mat currentImage, int threshold)
 }
 
 
-int getContours()
+void getContours()
 {
-	int contour_count = 0;
 	//Contours
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
@@ -196,10 +188,8 @@ int getContours()
 		if (boundRect[i].area() > area_threshold * 10) //10000)
 		{
 			rectangle(final, boundRect[i].tl(), boundRect[i].br(), Scalar(0, 255, 255), 2, 8, 0);
-			contour_count++;
 		}
 	}
-	return contour_count;
 }
 
 int main(int argc, char** argv)
@@ -225,48 +215,37 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	if (image1.size().width > 4400)
+	/*if (image1.size().width > 2000)
 	{
 		cv::resize(image1, image1, cvSize(0, 0), 0.5, 0.5);
-	}
-	if (image1.size().width > 2200)
-	{
-		cv::resize(image1, image1, cvSize(0, 0), 0.5, 0.5);
-	}
-	if (image1.size().width > 1100)
-	{
-		cv::resize(image1, image1, cvSize(0, 0), 0.5, 0.5);
-	}
-	
-
-	cv::resize(image2, image2, image1.size(), 0.0, 0.0);
+		cv::resize(image2, image2, image1.size(), 0, 0);
+	}*/
 
 	readConfig();
 	
 	getFiltered();
-	//cv::namedWindow("filtered", WINDOW_NORMAL); // Create a window for display.
-	//cv::imshow("filtered", image2_filtered);
-	//createTrackbar("Kernel:", "filtered", &filter_kernel, max_filter_kernel, filter_kernel_callback);
+	cv::namedWindow("filtered", WINDOW_NORMAL); // Create a window for display.
+	cv::imshow("filtered", image2_filtered);
+	createTrackbar("Kernel:", "filtered", &filter_kernel, max_filter_kernel, filter_kernel_callback);
 
 	getDiff(image1_filtered, image2_filtered, diff_threshold);
-	//cv::namedWindow("diffImageMask", WINDOW_NORMAL); // Create a window for display.
-	//cv::imshow("diffImageMask", diffImageMask);
-	//createTrackbar("Threshold:", "diffImageMask", &diff_threshold, max_diff_threshold, diff_threshold_callback);
-	
+	cv::namedWindow("diffImageMask", WINDOW_NORMAL); // Create a window for display.
+	cv::imshow("diffImageMask", diffImageMask);
+	createTrackbar("Threshold:", "diffImageMask", &diff_threshold, max_diff_threshold, diff_threshold_callback);
+
+	getContours();
+	cv::namedWindow("Final", WINDOW_NORMAL);
+	cv::imshow("Final", final);
+	createTrackbar("Area:", "Final", &area_threshold, max_area_threshold, area_threshold_callback);
+
+	waitKey(0); // Wait for a keystroke in the window
+
 	vector<int> compression_params;
 	compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
 	compression_params.push_back(95);
 
-	if (getContours() > 0)
-	{
-		//cv::namedWindow("Final", WINDOW_NORMAL);
-		//cv::imshow("Final", final);
-		//createTrackbar("Area:", "Final", &area_threshold, max_area_threshold, area_threshold_callback);
-		imwrite("test.jpg", final, compression_params);
-	}
-
-	//New image1 for next round
-	imwrite(argv[1], image2, compression_params);
+	imwrite("test.jpg", final, compression_params);
+	writeConfig();
 
 	return 0;
 }

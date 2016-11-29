@@ -1,0 +1,4 @@
+area_threshold = 90
+diff_threshold = 40
+filter_kernel = 2
+interval = 180
